@@ -51,4 +51,5 @@
 (defn greet! []
   (->> (get-rows "birthday/employees.csv")
     (birthday-rows (LocalDate/now))
-    (map #(send-message (build-message % (LocalDate/now))))))
+    (map #(send-message (build-message % (LocalDate/now))))
+    doall))
