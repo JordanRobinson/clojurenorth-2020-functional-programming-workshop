@@ -22,10 +22,6 @@
 
 (defn build-message [row todays-date]
   (let [[name email birthdate] row]
-    {:host "localhost"
-     :user "azurediamond"
-     :pass "hunter2"
-     :port 2525}
     {:from "me@example.com"
      :to email
      :subject "Happy Birthday!"
@@ -46,7 +42,12 @@
     rest))
 
 (defn send-message! [message]
-  (postal/send-message message))
+  (postal/send-message
+    {:host "localhost"
+     :user "azurediamond"
+     :pass "hunter2"
+     :port 2525}
+    message))
 
 (defn greet! []
   (->> (get-rows "birthday/employees.csv")
