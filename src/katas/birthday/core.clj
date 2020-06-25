@@ -45,11 +45,11 @@
     (csv/read-csv)
     rest))
 
-(defn send-message [message]
+(defn send-message! [message]
   (postal/send-message message))
 
 (defn greet! []
   (->> (get-rows "birthday/employees.csv")
     (birthday-rows (LocalDate/now))
-    (map #(send-message (build-message % (LocalDate/now))))
+    (map #(send-message! (build-message % (LocalDate/now))))
     doall))
