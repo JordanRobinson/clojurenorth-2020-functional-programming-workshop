@@ -9,29 +9,46 @@
    (java.time.format DateTimeFormatter)
    (java.time.temporal ChronoUnit)))
 
+(defn calculate-years [birthdate todays-date]
+  (.between ChronoUnit/YEARS
+    (LocalDate/parse birthdate
+      (DateTimeFormatter/ofPattern "yyyy/MM/dd"))
+    todays-date))
+
+(defn is-birthday? [birthdate todays-date]
+  (string/ends-with?
+    birthdate
+    (.format todays-date (DateTimeFormatter/ofPattern "MM/dd"))))
+
+(defn build-message [row todays-date]
+  (let [[name email birthdate] row]
+    {:host "localhost"
+     :user "azurediamond"
+     :pass "hunter2"
+     :port 2525}
+    {:from "me@example.com"
+     :to email
+     :subject "Happy Birthday!"
+     :body (str "Happy Birthday " name "! "
+             "Wow, you're "
+             (calculate-years birthdate todays-date)
+             " already!")}))
+
+(defn birthday-rows [todays-date rows]
+  (filter
+    (fn [row] (is-birthday? (row 2) todays-date))
+    rows))
+
+(defn get-rows [filename]
+  (->> (io/resource filename)
+    (io/reader)
+    (csv/read-csv)
+    rest))
+
+(defn send-message [message]
+  (postal/send-message message))
+
 (defn greet! []
-  (->> (io/resource "birthday/employees.csv")
-       (io/reader)
-       (csv/read-csv)
-       rest
-       (filter (fn [row]
-                 (string/ends-with?
-                   (row 2)
-                   (.format (LocalDate/now) (DateTimeFormatter/ofPattern "MM/dd")))))
-       (map (fn [row]
-                 (postal/send-message
-                  {:host "localhost"
-                   :user "azurediamond"
-                   :pass "hunter2"
-                   :port 2525}
-                  {:from "me@example.com"
-                   :to (row 1)
-                   :subject "Happy Birthday!"
-                   :body (str "Happy Birthday " (row 0) "! "
-                              "Wow, you're "
-                              (.between ChronoUnit/YEARS
-                                        (LocalDate/parse (row 2)
-                                                         (DateTimeFormatter/ofPattern "yyyy/MM/dd"))
-                                        (LocalDate/now))
-                              " already!")})))
-       doall))
+  (->> (get-rows "birthday/employees.csv")
+    (birthday-rows (LocalDate/now))
+    (map #(send-message (build-message % (LocalDate/now))))))
